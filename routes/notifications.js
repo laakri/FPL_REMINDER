@@ -2,8 +2,7 @@ import fetch from "node-fetch";
 import dotenv from "dotenv";
 
 dotenv.config();
-const DISCORD_WEBHOOK = "process.env.DISCORD_WEBHOOK";
-
+const DISCORD_WEBHOOK = process.env.DISCORD_WEBHOOK;
 async function getNextDeadline() {
   const res = await fetch("https://fantasy.premierleague.com/api/events/");
   const data = await res.json();
