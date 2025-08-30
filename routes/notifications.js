@@ -2,7 +2,7 @@ import fetch from "node-fetch";
 import dotenv from "dotenv";
 
 dotenv.config();
-const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1411277972316622898/-uwZGhijny8BEvILgZ3-v86IxpuXke9RMyCW32xsknJWUMCUXx8p-FwAKpp71Rp1D1-N";
+const DISCORD_WEBHOOK = "process.env.DISCORD_WEBHOOK";
 
 async function getNextDeadline() {
   const res = await fetch("https://fantasy.premierleague.com/api/events/");
