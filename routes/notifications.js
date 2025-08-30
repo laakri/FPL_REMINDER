@@ -54,6 +54,7 @@ let intervalId;
 const notifications = {
   start() {
     console.log("🔔 FPL notifier started...");
+    sendDiscordNotification("✅ Test notification – system working!");
     checkAndNotify();
 
     intervalId = setInterval(async () => {
