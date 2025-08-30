@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FPL Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1C0029 0%, #2C003E 100%);
+            color: #FFFFFF;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #00CFFF 0%, #9333EA 100%);
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 20px rgba(0, 207, 255, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 0.2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background: rgba(44, 0, 62, 0.6);
+            border: 1px solid rgba(0, 207, 255, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #00CFFF 0%, #9333EA 100%);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 207, 255, 0.2);
+            border-color: rgba(0, 207, 255, 0.4);
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #00CFFF;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #FFD600;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .gw-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .gw-item {
+            background: rgba(0, 207, 255, 0.1);
+            border: 1px solid rgba(0, 207, 255, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .gw-item:hover {
+            background: rgba(0, 207, 255, 0.2);
+            transform: scale(1.02);
+        }
+
+        .gw-item.current {
+            background: linear-gradient(135deg, #FFD600 0%, #FF8C00 100%);
+            color: #1C0029;
+            font-weight: 600;
+        }
+
+        .gw-item.next {
+            background: linear-gradient(135deg, #00CFFF 0%, #9333EA 100%);
+            animation: glow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 20px rgba(0, 207, 255, 0.5); }
+            to { box-shadow: 0 0 30px rgba(147, 51, 234, 0.5); }
+        }
+
+        .gw-number {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .gw-deadline {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .league-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .league-table th,
+        .league-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 207, 255, 0.2);
+        }
+
+        .league-table th {
+            background: rgba(0, 207, 255, 0.1);
+            color: #00CFFF;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .league-table tr:hover {
+            background: rgba(0, 207, 255, 0.1);
+        }
+
+        .league-table .rank {
+            font-weight: 700;
+            color: #FFD600;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .team-stat {
+            background: rgba(0, 207, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .team-stat .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #00CFFF;
+            margin-bottom: 0.5rem;
+        }
+
+        .team-stat .label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #E0E0E0;
+        }
+
+        .error {
+            background: rgba(255, 69, 58, 0.1);
+            border: 1px solid rgba(255, 69, 58, 0.3);
+            color: #FF453A;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(90deg, #00CFFF 0%, #9333EA 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 207, 255, 0.4);
+        }
+
+        .refresh-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .badge {
+            background: #FFD600;
+            color: #1C0029;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+            
+            .header {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .capture-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        .spinner {
+            border: 3px solid rgba(0, 207, 255, 0.3);
+            border-top: 3px solid #00CFFF;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚽ Fantasy Premier League Dashboard</h1>
+        <div class="subtitle">Live gameweek data, league standings & team captures</div>
+        <div style="margin-top: 1rem;">
+            <a href="/scraper" style="color: #FFD600; text-decoration: none; font-weight: 600; padding: 0.5rem 1rem; border: 2px solid #FFD600; border-radius: 6px; transition: all 0.3s ease;" onmouseover="this.style.background='#FFD600'; this.style.color='#1C0029'" onmouseout="this.style.background='transparent'; this.style.color='#FFD600'">
+                📸 Go to Team Scraper
+            </a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Gameweek Overview -->
+        <div class="card full-width">
+            <div class="card-title">
+                📅 Gameweek Overview
+                <div class="status-indicator"></div>
+            </div>
+            <div id="gameweek-data" class="loading">
+                <div class="spinner"></div>
+                <p>Loading gameweek data...</p>
+            </div>
+        </div>
+
+        <!-- League Standings -->
+        <div class="card">
+            <div class="card-title">🏆 League Standings</div>
+            <div id="league-data" class="loading">
+                <div class="spinner"></div>
+                <p>Loading league standings...</p>
+            </div>
+        </div>
+
+        <!-- My Team -->
+        <div class="card">
+            <div class="card-title">👤 My Team Performance</div>
+            <div id="team-data" class="loading">
+                <div class="spinner"></div>
+                <p>Loading team data...</p>
+            </div>
+        </div>
+
+
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:4000';
+
+        // Utility functions
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleString('en-GB', {
+                timeZone: 'Europe/London',
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function formatNumber(num) {
+            return num?.toLocaleString() || 'N/A';
+        }
+
+        // Load gameweek data (KEEP ORIGINAL)
+        async function loadGameweekData() {
+            try {
+                const response = await fetch(`${BASE_URL}/api/events`);
+                const events = await response.json();
+                
+                const now = new Date();
+                
+                // Find current, next, and previous gameweeks correctly
+                const currentGW = events.find(e => e.is_current);
+                const nextGW = events.find(e => {
+                    const deadlineDate = new Date(e.deadline_time);
+                    return deadlineDate > now && !e.finished;
+                });
+                const previousGW = events.find(e => e.is_previous) || 
+                                 events.filter(e => e.finished).slice(-1)[0];
+                
+                console.log('Current GW:', currentGW?.id);
+                console.log('Next GW:', nextGW?.id, nextGW?.deadline_time);
+                console.log('Previous GW:', previousGW?.id);
+                
+                const gwHtml = `
+                    <div class="gw-grid">
+                        ${previousGW ? `
+                            <div class="gw-item">
+                                <div class="gw-number">GW ${previousGW.id} ✅</div>
+                                <div class="gw-deadline">Finished</div>
+                                <div style="margin-top: 0.5rem; font-size: 0.8rem;">
+                                    Avg: ${previousGW.average_entry_score} pts<br>
+                                    High: ${formatNumber(previousGW.highest_score)} pts
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        ${currentGW ? `
+                            <div class="gw-item current">
+                                <div class="gw-number">GW ${currentGW.id} 🔥</div>
+                                <div class="gw-deadline">Active Now</div>
+                                <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #1C0029;">
+                                    Games in progress
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        ${nextGW ? `
+                            <div class="gw-item next">
+                                <div class="gw-number">GW ${nextGW.id} ⏰</div>
+                                <div class="gw-deadline">
+                                    ${formatDate(nextGW.deadline_time)}
+                                </div>
+                                <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #FFD600;">
+                                    Next Deadline
+                                </div>
+                            </div>
+                        ` : `
+                            <div class="gw-item">
+                                <div class="gw-number">🏁 Season</div>
+                                <div class="gw-deadline">Complete</div>
+                                <div style="margin-top: 0.5rem; font-size: 0.8rem;">
+                                    No more gameweeks
+                                </div>
+                            </div>
+                        `}
+                        
+                        <div class="gw-item">
+                            <div class="gw-number">📊 Season Stats</div>
+                            <div style="font-size: 0.8rem; margin-top: 0.5rem;">
+                                Total GWs: ${events.length}<br>
+                                Completed: ${events.filter(e => e.finished).length}<br>
+                                Players: ${formatNumber(events[events.length-1]?.ranked_count)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('gameweek-data').innerHTML = gwHtml;
+            } catch (error) {
+                document.getElementById('gameweek-data').innerHTML = `
+                    <div class="error">Failed to load gameweek data: ${error.message}</div>
+                `;
+            }
+        }
+
+        // Load league standings (KEEP ORIGINAL)
+        async function loadLeagueData() {
+            try {
+                const response = await fetch(`${BASE_URL}/league/my-league`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                const standings = data.standings?.results || [];
+                const leagueInfo = data.league;
+                
+                let leagueHtml = `
+                    <div style="margin-bottom: 1rem;">
+                        <h3 style="color: #00CFFF; margin-bottom: 0.5rem;">${leagueInfo?.name || 'My League'}</h3>
+                        <div style="font-size: 0.9rem; opacity: 0.8;">
+                            ${standings.length} managers
+                        </div>
+                    </div>
+                    
+                    <table class="league-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Manager</th>
+                                <th>Team</th>
+                                <th>Total</th>
+                                <th>GW</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                standings.slice(0, 10).forEach(entry => {
+                    leagueHtml += `
+                        <tr>
+                            <td class="rank">${entry.rank}</td>
+                            <td>${entry.player_name}</td>
+                            <td style="font-size: 0.9rem; opacity: 0.8;">${entry.entry_name}</td>
+                            <td style="font-weight: 600; color: #00CFFF;">${formatNumber(entry.total)}</td>
+                            <td>${entry.event_total || '-'}</td>
+                        </tr>
+                    `;
+                });
+                
+                leagueHtml += `
+                        </tbody>
+                    </table>
+                `;
+                
+                if (standings.length > 10) {
+                    leagueHtml += `<div style="text-align: center; margin-top: 1rem; opacity: 0.7; font-size: 0.9rem;">... and ${standings.length - 10} more managers</div>`;
+                }
+                
+                document.getElementById('league-data').innerHTML = leagueHtml;
+            } catch (error) {
+                document.getElementById('league-data').innerHTML = `
+                    <div class="error">Failed to load league data: ${error.message}</div>
+                    <button class="refresh-btn" onclick="loadLeagueData()">Retry</button>
+                `;
+            }
+        }
+
+        // Load team data (KEEP ORIGINAL)
+        async function loadTeamData() {
+            try {
+                const response = await fetch(`${BASE_URL}/league/my-team`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                const picks = data.picks || [];
+                const teamValue = data.entry?.value || 0;
+                const bank = data.entry?.bank || 0;
+                const totalValue = teamValue + bank;
+                
+                // Get current gameweek for chip info
+                const eventsResponse = await fetch(`${BASE_URL}/api/events`);
+                const events = await eventsResponse.json();
+                const now = new Date();
+                const nextEvent = events.find(e => {
+                    const deadlineDate = new Date(e.deadline_time);
+                    return deadlineDate > now && !e.finished;
+                });
+                
+                const teamHtml = `
+                    <div class="team-grid">
+                        <div class="team-stat">
+                            <div class="value">£${(totalValue / 10).toFixed(1)}m</div>
+                            <div class="label">Team Value</div>
+                        </div>
+                        
+                        <div class="team-stat">
+                            <div class="value">£${(bank / 10).toFixed(1)}m</div>
+                            <div class="label">In Bank</div>
+                        </div>
+                        
+                        <div class="team-stat">
+                            <div class="value">${picks.length}</div>
+                            <div class="label">Players</div>
+                        </div>
+                        
+                        <div class="team-stat">
+                            <div class="value">${data.transfers?.limit || 1}</div>
+                            <div class="label">Free Transfers</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem;">
+                        <h4 style="color: #00CFFF; margin-bottom: 1rem;">🎯 Active Chips</h4>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            ${data.chips?.filter(chip => chip.status_for_entry === 'available').map(chip => 
+                                `<span class="badge">${chip.name}</span>`
+                            ).join('') || '<span style="opacity: 0.7;">No chips available</span>'}
+                        </div>
+                    </div>
+                    
+                    ${nextEvent ? `
+                        <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(255, 214, 0, 0.1); border-radius: 8px; border: 1px solid rgba(255, 214, 0, 0.3);">
+                            <h4 style="color: #FFD600; margin-bottom: 0.5rem;">⏰ Next Deadline</h4>
+                            <div style="font-size: 1.1rem; font-weight: 600;">
+                                ${formatDate(nextEvent.deadline_time)}
+                            </div>
+                        </div>
+                    ` : ''}
+                `;
+                
+                document.getElementById('team-data').innerHTML = teamHtml;
+            } catch (error) {
+                document.getElementById('team-data').innerHTML = `
+                    <div class="error">Failed to load team data: ${error.message}</div>
+                    <button class="refresh-btn" onclick="loadTeamData()">Retry</button>
+                `;
+            }
+        }
+
+
+
+        // Test authentication and show status
+        async function testAuth() {
+            try {
+                const response = await fetch(`${BASE_URL}/league/test-auth`);
+                const data = await response.json();
+                
+                if (data.message) {
+                    console.log('✅ Authentication working:', data);
+                    return true;
+                } else {
+                    console.error('❌ Authentication failed:', data);
+                    return false;
+                }
+            } catch (error) {
+                console.error('❌ Server connection failed:', error);
+                return false;
+            }
+        }
+
+        // Initialize dashboard (KEEP ORIGINAL)
+        async function initDashboard() {
+            console.log('🚀 Initializing FPL Dashboard...');
+            
+            // Test authentication first
+            const authWorking = await testAuth();
+            
+            // Load all data
+            await Promise.all([
+                loadGameweekData(),
+                authWorking ? loadLeagueData() : Promise.resolve(),
+                authWorking ? loadTeamData() : Promise.resolve()
+            ]);
+            
+            console.log('✅ Dashboard loaded!');
+        }
+
+        // Auto-refresh every 5 minutes (KEEP ORIGINAL)
+        function startAutoRefresh() {
+            setInterval(() => {
+                console.log('🔄 Auto-refreshing dashboard...');
+                initDashboard();
+            }, 5 * 60 * 1000); // 5 minutes
+        }
+
+
+
+        // Initialize when page loads (KEEP ORIGINAL)
+        document.addEventListener('DOMContentLoaded', () => {
+            initDashboard();
+            startAutoRefresh();
+        });
+    </script>

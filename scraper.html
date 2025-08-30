@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FPL Team Scraper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1C0029 0%, #2C003E 100%);
+            color: #FFFFFF;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #00CFFF 0%, #9333EA 100%);
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 20px rgba(0, 207, 255, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 0.2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .card {
+            background: rgba(44, 0, 62, 0.6);
+            border: 1px solid rgba(0, 207, 255, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #00CFFF 0%, #9333EA 100%);
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #00CFFF;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .capture-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .capture-btn {
+            background: linear-gradient(90deg, #00CFFF 0%, #9333EA 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .capture-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 207, 255, 0.4);
+        }
+
+        .capture-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .teams-captures {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .team-capture {
+            background: rgba(44, 0, 62, 0.8);
+            border: 1px solid rgba(0, 207, 255, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .team-capture:hover {
+            transform: translateY(-2px);
+            border-color: rgba(0, 207, 255, 0.5);
+        }
+
+        .capture-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            border-bottom: 1px solid rgba(0, 207, 255, 0.2);
+            padding-bottom: 0.5rem;
+        }
+
+        .capture-rank {
+            background: #FFD600;
+            color: #1C0029;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .capture-points {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .team-screenshot {
+            width: 100%;
+            max-width: 250px;
+            height: 180px;
+            background: rgba(0, 207, 255, 0.1);
+            border: 2px dashed rgba(0, 207, 255, 0.3);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .team-screenshot img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .capture-placeholder {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .capture-status {
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            text-align: center;
+            opacity: 0.8;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .status {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .capture-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📸 FPL Team Scraper</h1>
+        <div class="subtitle">Real team screenshot capture</div>
+        <div style="margin-top: 1rem;">
+            <a href="/dashboard" style="color: #FFD600; text-decoration: none; font-weight: 600; padding: 0.5rem 1rem; border: 2px solid #FFD600; border-radius: 6px; transition: all 0.3s ease;" onmouseover="this.style.background='#FFD600'; this.style.color='#1C0029'" onmouseout="this.style.background='transparent'; this.style.color='#FFD600'">
+                ⚽ Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Team Capture Section -->
+        <div class="card">
+            <div class="card-title">📸 Team Screenshot Capture</div>
+            
+            <div class="capture-controls">
+                <button id="captureBtn" class="capture-btn">Show Teams</button>
+                <div id="status" class="status">Click to capture top 8 team screenshots</div>
+            </div>
+
+            <div id="teamCaptures" class="teams-captures hidden">
+                <!-- Team captures will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:4000';
+        console.log('🚀 Scraper initialized with BASE_URL:', BASE_URL);
+
+        // Utility functions
+        function formatNumber(num) {
+            return num?.toLocaleString() || 'N/A';
+        }
+
+        // Parallel team screenshot capture function
+        async function captureTeamScreenshots() {
+            const captureBtn = document.getElementById('captureBtn');
+            const statusEl = document.getElementById('status');
+            const capturesContainer = document.getElementById('teamCaptures');
+            
+            captureBtn.disabled = true;
+            captureBtn.textContent = 'Capturing All Teams...';
+            statusEl.textContent = 'Starting simultaneous capture of all teams...';
+
+            // Show captures section immediately
+            capturesContainer.classList.remove('hidden');
+            
+            // Clear previous captures
+            capturesContainer.innerHTML = '';
+            
+            try {
+                // Call the parallel capture endpoint
+                console.log('🚀 Calling parallel capture endpoint...');
+                const response = await fetch(`${BASE_URL}/scraper/capture-all-teams`);
+                console.log('📡 Response status:', response.status);
+                const data = await response.json();
+                console.log('📊 Response data:', data);
+                
+                if (data.success) {
+                    // Display all captures at once
+                    data.captures.forEach(capture => {
+                        const manager = capture.manager;
+                        
+                        if (capture.success) {
+                            // Create and add the team capture element
+                            const teamCaptureHtml = `
+                                <div class="team-capture">
+                                    <div class="capture-header">
+                                        <div>
+                                            <div style="font-weight: 600; color: #00CFFF;">${manager.player_name}</div>
+                                            <div style="font-size: 0.8rem; opacity: 0.8;">${manager.entry_name}</div>
+                                        </div>
+                                        <div class="capture-rank">#${manager.rank}</div>
+                                    </div>
+                                    
+                                    <div class="capture-points">
+                                        <div style="font-weight: 600; color: #FFD600;">${formatNumber(manager.total)} pts</div>
+                                        <div style="color: #00CFFF;">GW: ${manager.event_total || 0}pts</div>
+                                    </div>
+                                    
+                                    <div class="team-screenshot">
+                                        <img src="data:image/png;base64,${capture.base64}" alt="${manager.player_name}'s team" style="width: 100%; height: auto;" />
+                                    </div>
+                                    
+                                    <div class="capture-status">
+                                        ✅ Full team captured!
+                                    </div>
+                                </div>
+                            `;
+                            
+                            capturesContainer.insertAdjacentHTML('beforeend', teamCaptureHtml);
+                            
+                        } else {
+                            // Show failed capture
+                            const failedCaptureHtml = `
+                                <div class="team-capture">
+                                    <div class="capture-header">
+                                        <div>
+                                            <div style="font-weight: 600; color: #00CFFF;">${manager.player_name}</div>
+                                            <div style="font-size: 0.8rem; opacity: 0.8;">${manager.entry_name}</div>
+                                        </div>
+                                        <div class="capture-rank">#${manager.rank}</div>
+                                    </div>
+                                    
+                                    <div class="capture-points">
+                                        <div style="font-weight: 600; color: #FFD600;">${formatNumber(manager.total)} pts</div>
+                                        <div style="color: #00CFFF;">GW: ${manager.event_total || 0}pts</div>
+                                    </div>
+                                    
+                                    <div class="team-screenshot">
+                                        <div class="capture-placeholder">
+                                            <div style="color: #ff6b6b;">❌ Capture failed</div>
+                                            <div style="font-size: 0.8rem; margin-top: 0.5rem;">${capture.error || 'Unknown error'}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="capture-status">
+                                        ❌ ${capture.error || 'Capture failed'}
+                                    </div>
+                                </div>
+                            `;
+                            
+                            capturesContainer.insertAdjacentHTML('beforeend', failedCaptureHtml);
+                        }
+                    });
+                    
+                    statusEl.textContent = `✅ Completed ${data.successful_captures}/${data.total_attempts} team screenshots!`;
+                    
+                } else {
+                    throw new Error(data.error || 'Capture failed');
+                }
+                
+            } catch (error) {
+                statusEl.textContent = `❌ Capture failed: ${error.message}`;
+                console.error('Capture error:', error);
+            } finally {
+                captureBtn.disabled = false;
+                captureBtn.textContent = 'Show Teams';
+            }
+        }
+
+        // Event listeners
+        document.getElementById('captureBtn').addEventListener('click', captureTeamScreenshots);
+    </script>
+</body>
+</html>
